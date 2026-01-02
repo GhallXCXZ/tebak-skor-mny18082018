@@ -24,13 +24,18 @@ function unlock() {
   const p = document.getElementById("pin").value;
   if (p === ADMIN_PIN) {
     adminUnlocked = true;
+
+    // sembunyikan pin
+    document.getElementById("pinBox").style.display = "none";
+
+    // tampilkan admin area
     document.getElementById("adminArea").style.display = "block";
-    document.getElementById("pin").value = "";
-    alert("Admin unlocked");
+
   } else {
     alert("PIN SALAH");
   }
 }
+
 
 /***********************
  * USER SIDE
