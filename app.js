@@ -90,25 +90,12 @@ function kirim() {
 }
 
 /***********************
- * ADMIN SIDE
+ * ADMIN SIDE (FIXED)
  ***********************/
 const matchList = document.getElementById("matchList");
 const adminResult = document.getElementById("adminResult");
 
-// TAMBAH MATCH
-function tambahMatch() {
-  const input = document.getElementById("matchName");
-  const nama = input.value.trim();
-  if (!nama) return alert("Isi nama pertandingan");
-
-  db.ref("matches").push({
-    nama,
-    open: true,
-    results: {}
-  });
-
-  input.value = "";
-}
+let currentAdminMatchId = null;
 
 // LOAD MATCH ADMIN
 db.ref("matches").on("value", snap => {
@@ -118,26 +105,39 @@ db.ref("matches").on("value", snap => {
   snap.forEach(m => {
     const li = document.createElement("li");
     li.innerHTML = `
-      <b>${m.val().nama}</b>
-      <button onclick="toggle('${m.key}', ${m.val().open})">
+      <b>${m.val().nama}</b><br>
+      <button type="button" onclick="toggle('${m.key}', ${m.val().open})">
         ${m.val().open ? "Tutup" : "Buka"}
       </button>
-      <button onclick="lihat('${m.key}')">Lihat Hasil</button>
+      <button type="button" onclick="lihat('${m.key}')">
+        Lihat Hasil
+      </button>
     `;
     matchList.appendChild(li);
   });
 });
 
-// OPEN / CLOSE
+// OPEN / CLOSE MATCH
 function toggle(id, current) {
   db.ref(`matches/${id}/open`).set(!current);
 }
 
-// LIHAT HASIL ADMIN
+// LIHAT HASIL (FIX UTAMA 🔥)
 function lihat(id) {
   if (!adminResult) return;
+  currentAdminMatchId = id;
+
+  adminResult.innerHTML = "<li>Loading...</li>";
+
+  db.ref(`matches/${id}/results`).off(); // bersihin listener lama
   db.ref(`matches/${id}/results`).on("value", snap => {
     adminResult.innerHTML = "";
+
+    if (!snap.exists()) {
+      adminResult.innerHTML = "<li>Belum ada tebakan</li>";
+      return;
+    }
+
     snap.forEach(r => {
       const li = document.createElement("li");
       li.innerText = `${r.key} : ${r.val().skor}`;
@@ -145,3 +145,4 @@ function lihat(id) {
     });
   });
 }
+
