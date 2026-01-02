@@ -8,18 +8,29 @@
 <body>
 
 <div class="box">
-  <h1>ADMIN PANEL</h1>
+  <h1>🔐 ADMIN PANEL</h1>
 
-  <input id="matchName" placeholder="Nama pertandingan">
-  <button onclick="tambahMatch()">Tambah Match</button>
-
-  <hr>
-  <h3>Daftar Match</h3>
-  <ul id="matchList"></ul>
+  <!-- PIN LOGIN -->
+  <input id="pin" type="password" placeholder="Masukkan PIN Admin">
+  <button type="button" onclick="unlock()">Masuk Admin</button>
 
   <hr>
-  <h3>Hasil Tebakan</h3>
-  <ul id="adminResult"></ul>
+
+  <!-- AREA ADMIN (TERKUNCI) -->
+  <div id="adminArea" style="display:none">
+
+    <input id="matchName" placeholder="Nama pertandingan">
+    <button type="button" onclick="tambahMatch()">Tambah Match</button>
+
+    <hr>
+    <h3>Daftar Match</h3>
+    <ul id="matchList"></ul>
+
+    <hr>
+    <h3>Hasil Tebakan</h3>
+    <ul id="adminResult"></ul>
+
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
