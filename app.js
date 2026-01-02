@@ -105,14 +105,22 @@ db.ref("matches").on("value", snap => {
   snap.forEach(m => {
     const li = document.createElement("li");
     li.innerHTML = `
-      <b>${m.val().nama}</b><br>
-      <button type="button" onclick="toggle('${m.key}', ${m.val().open})">
-        ${m.val().open ? "Tutup" : "Buka"}
-      </button>
-      <button type="button" onclick="lihat('${m.key}')">
-        Lihat Hasil
-      </button>
-    `;
+  <b>${m.val().nama}</b><br>
+
+  <button type="button" onclick="toggle('${m.key}', ${m.val().open})">
+    ${m.val().open ? "Tutup" : "Buka"}
+  </button>
+
+  <button type="button" onclick="lihat('${m.key}')">
+    Lihat Hasil
+  </button>
+
+  <button type="button" onclick="hapusMatch('${m.key}')"
+    style="background:#ef4444;color:white;margin-top:6px;">
+    Hapus Match
+  </button>
+`;
+
     matchList.appendChild(li);
   });
 });
@@ -146,3 +154,17 @@ function lihat(id) {
   });
 }
 
+function hapusMatch(id) {
+  if (!confirm("Yakin mau menghapus pertandingan ini?")) return;
+
+  db.ref(`matches/${id}`).remove()
+    .then(() => {
+      if (adminResult) {
+        adminResult.innerHTML = "<li>Match dihapus</li>";
+      }
+    })
+    .catch(err => {
+      alert("Gagal hapus match");
+      console.error(err);
+    });
+}
