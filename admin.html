@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Tebak Skor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="box">
+  <h1>ADMIN PANEL</h1>
+
+  <input id="judulInput" placeholder="Judul Acara / Match">
+  <input id="timA" placeholder="Nama Tim A">
+  <input id="timB" placeholder="Nama Tim B">
+
+  <button onclick="setMatch()">Set Match</button>
+
+  <hr>
+
+  <button onclick="buka()">Buka Polling</button>
+  <button onclick="tutup()">Tutup Polling</button>
+
+  <hr>
+
+  <button class="danger" onclick="reset()">RESET DATA</button>
+
+  <p id="info"></p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

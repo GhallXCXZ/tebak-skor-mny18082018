@@ -1,0 +1,44 @@
+body {
+  background: #0f172a;
+  color: white;
+  font-family: Arial;
+}
+
+.box {
+  max-width: 420px;
+  margin: 40px auto;
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+}
+
+.skor {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skor input {
+  width: 40%;
+}
+
+button {
+  background: #22c55e;
+  border: none;
+  font-weight: bold;
+}
+
+.danger {
+  background: #ef4444;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
