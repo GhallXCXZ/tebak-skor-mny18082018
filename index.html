@@ -10,9 +10,7 @@
 <div class="box">
   <h1>🏆 Challenge Berhadiah</h1>
 
-  <select id="matchSelect">
-    <option value="">-- Pilih Pertandingan --</option>
-  </select>
+  <select id="matchSelect"></select>
 
   <input id="nama" placeholder="Nama pengisi">
 
@@ -25,12 +23,12 @@
   <button onclick="kirim()">Kirim Tebakan</button>
 
   <hr>
+  <h3>Hasil Tebakan</h3>
   <ul id="list"></ul>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="app.js"></script>
-
 </body>
 </html>
