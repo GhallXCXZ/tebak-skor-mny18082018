@@ -2,27 +2,21 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Admin Tebak Skor</title>
+  <title>Admin Challenge</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="box">
-  <h1>ADMIN PANEL</h1>
+  <h1>ADMIN MATCH</h1>
 
-  <input id="judulInput" placeholder="Judul pertandingan">
-  <button onclick="setJudul()">Set Judul</button>
-
-  <hr>
-
-  <button onclick="buka()">Buka Polling</button>
-  <button onclick="tutup()">Tutup Polling</button>
+  <input id="matchName" placeholder="Nama pertandingan">
+  <button onclick="tambahMatch()">Tambah Match</button>
 
   <hr>
+  <h3>Daftar Match</h3>
+  <ul id="matchList"></ul>
 
-  <button class="danger" onclick="reset()">RESET DATA</button>
-
-  <p id="info"></p>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>

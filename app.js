@@ -1,10 +1,9 @@
-// 🔥 GANTI DENGAN FIREBASE CONFIG KAMU 🔥
 const firebaseConfig = {
-  apiKey: "API_KEY_KAMU",
+  apiKey: "AIzaSyA2mdpjT5RvvxMxkXSLF8vnxHk5MaIErS4",
   authDomain: "xxx.firebaseapp.com",
-  databaseURL: "https://xxx.firebaseio.com",
-  projectId: "xxx",
-  storageBucket: "xxx.appspot.com",
+  databaseURL: "https://mny-apk-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mny-apk",
+  storageBucket: "mny-apk.appspot.com",
   messagingSenderId: "xxx",
   appId: "xxx"
 };
@@ -12,72 +11,65 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// USER LISTENER
-db.ref("config").on("value", s => {
-  if (!document.getElementById("judul")) return;
-  document.getElementById("judul").innerText = s.val()?.judul || "Menunggu...";
-  document.getElementById("status").innerText =
-    s.val()?.buka ? "Polling Dibuka" : "Polling Ditutup";
-});
+// ===== USER =====
+const select = document.getElementById("matchSelect");
+const list = document.getElementById("list");
 
-db.ref("data").on("value", s => {
-  if (!document.getElementById("list")) return;
-  let list = document.getElementById("list");
-  list.innerHTML = "";
-  s.forEach(d => {
-    let li = document.createElement("li");
-    li.innerText = `${d.val().nama} : ${d.val().skor}`;
-    list.appendChild(li);
+db.ref("matches").on("value", snap => {
+  if (!select) return;
+
+  select.innerHTML = `<option value="">-- Pilih Pertandingan --</option>`;
+  snap.forEach(m => {
+    let opt = document.createElement("option");
+    opt.value = m.key;
+    opt.textContent = m.val().nama;
+    select.appendChild(opt);
   });
 });
 
-// USER SUBMIT
 function kirim() {
-  db.ref("config/buka").once("value", s => {
-    if (!s.val()) return alert("Polling ditutup");
+  let matchId = select.value;
+  let nama = document.getElementById("nama").value.trim();
+  let a = document.getElementById("a").value;
+  let b = document.getElementById("b").value;
 
-    let nama = namaEl().value.trim();
-    let a = aEl().value;
-    let b = bEl().value;
+  if (!matchId) return alert("Pilih pertandingan");
+  if (!nama || a === "" || b === "") return alert("Lengkapi data");
+  if (a === b) return alert("Skor tidak boleh seri");
 
-    if (!nama || a === "" || b === "") return alert("Lengkapi data");
-    if (a === b) return alert("Skor tidak boleh seri");
+  let skor = a + "-" + b;
 
-    let skor = a + "-" + b;
-
-    db.ref("data").once("value", snap => {
-      let ada = false;
-      snap.forEach(d => { if (d.val().skor === skor) ada = true; });
-      if (ada) return alert("Skor sudah dipilih");
-
-      db.ref("data").push({ nama, skor });
+  db.ref("matches/" + matchId + "/data").once("value", snap => {
+    let sama = false;
+    snap.forEach(d => {
+      if (d.val().skor === skor) sama = true;
     });
+    if (sama) return alert("Skor sudah dipilih");
+
+    db.ref("matches/" + matchId + "/data").push({ nama, skor });
   });
 }
 
-// ADMIN
-function setJudul() {
-  db.ref("config/judul").set(judulInput.value);
-  info("Judul diupdate");
+// ===== ADMIN =====
+const matchList = document.getElementById("matchList");
+
+function tambahMatch() {
+  let nama = document.getElementById("matchName").value.trim();
+  if (!nama) return alert("Isi nama match");
+
+  db.ref("matches").push({
+    nama: nama
+  });
+
+  document.getElementById("matchName").value = "";
 }
 
-function buka() {
-  db.ref("config/buka").set(true);
-  info("Polling dibuka");
-}
-
-function tutup() {
-  db.ref("config/buka").set(false);
-  info("Polling ditutup");
-}
-
-function reset() {
-  db.ref("data").remove();
-  info("Data direset");
-}
-
-// HELPERS
-const namaEl = () => document.getElementById("nama");
-const aEl = () => document.getElementById("a");
-const bEl = () => document.getElementById("b");
-const info = t => document.getElementById("info").innerText = t;
+db.ref("matches").on("value", snap => {
+  if (!matchList) return;
+  matchList.innerHTML = "";
+  snap.forEach(m => {
+    let li = document.createElement("li");
+    li.textContent = m.val().nama;
+    matchList.appendChild(li);
+  });
+});
