@@ -1,30 +1,28 @@
+// 🔥 GANTI DENGAN FIREBASE CONFIG KAMU 🔥
 const firebaseConfig = {
-  apiKey: "AIzaSyA2mdpjT5RvvxMxkXSLF8vnxHk5MaIErS4",
-  authDomain: "mny-apk.firebaseapp.com",
-  databaseURL: "https://mny-apk-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "mny-apk",
-  storageBucket: "mny-apk.firebasestorage.app",
-  messagingSenderId: "632181465576",
-  appId: "1:632181465576:web:6ab8dbd8671ce5edd3c45d",
-  measurementId: "G-EE5GPSE88G"
+  apiKey: "API_KEY_KAMU",
+  authDomain: "xxx.firebaseapp.com",
+  databaseURL: "https://xxx.firebaseio.com",
+  projectId: "xxx",
+  storageBucket: "xxx.appspot.com",
+  messagingSenderId: "xxx",
+  appId: "xxx"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-// LISTENER USER
+// USER LISTENER
 db.ref("config").on("value", s => {
-  if (!s.val()) return;
-  if (document.getElementById("judul")) {
-    judul.innerText = s.val().judul || "";
-    match.innerText = `${s.val().timA} VS ${s.val().timB}`;
-    status.innerText = s.val().buka ? "Polling Dibuka" : "Polling Ditutup";
-  }
+  if (!document.getElementById("judul")) return;
+  document.getElementById("judul").innerText = s.val()?.judul || "Menunggu...";
+  document.getElementById("status").innerText =
+    s.val()?.buka ? "Polling Dibuka" : "Polling Ditutup";
 });
 
 db.ref("data").on("value", s => {
-  if (!list) return;
+  if (!document.getElementById("list")) return;
+  let list = document.getElementById("list");
   list.innerHTML = "";
   s.forEach(d => {
     let li = document.createElement("li");
@@ -35,12 +33,12 @@ db.ref("data").on("value", s => {
 
 // USER SUBMIT
 function kirim() {
-  db.ref("config/buka").once("value", buka => {
-    if (!buka.val()) return alert("Polling ditutup");
+  db.ref("config/buka").once("value", s => {
+    if (!s.val()) return alert("Polling ditutup");
 
-    let nama = document.getElementById("nama").value.trim();
-    let a = document.getElementById("a").value;
-    let b = document.getElementById("b").value;
+    let nama = namaEl().value.trim();
+    let a = aEl().value;
+    let b = bEl().value;
 
     if (!nama || a === "" || b === "") return alert("Lengkapi data");
     if (a === b) return alert("Skor tidak boleh seri");
@@ -49,9 +47,7 @@ function kirim() {
 
     db.ref("data").once("value", snap => {
       let ada = false;
-      snap.forEach(d => {
-        if (d.val().skor === skor) ada = true;
-      });
+      snap.forEach(d => { if (d.val().skor === skor) ada = true; });
       if (ada) return alert("Skor sudah dipilih");
 
       db.ref("data").push({ nama, skor });
@@ -60,14 +56,9 @@ function kirim() {
 }
 
 // ADMIN
-function setMatch() {
-  db.ref("config").set({
-    judul: judulInput.value,
-    timA: timA.value,
-    timB: timB.value,
-    buka: false
-  });
-  info("Match di-set");
+function setJudul() {
+  db.ref("config/judul").set(judulInput.value);
+  info("Judul diupdate");
 }
 
 function buka() {
@@ -85,6 +76,8 @@ function reset() {
   info("Data direset");
 }
 
-function info(t) {
-  document.getElementById("info").innerText = t;
-}
+// HELPERS
+const namaEl = () => document.getElementById("nama");
+const aEl = () => document.getElementById("a");
+const bEl = () => document.getElementById("b");
+const info = t => document.getElementById("info").innerText = t;
