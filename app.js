@@ -1,68 +1,87 @@
+/***********************
+ * FIREBASE CONFIG
+ ***********************/
+const firebaseConfig = {
+  apiKey: "AIzaSyA2mdpjT5RvvxMxkXSLF8vnxHk5MaIErS4",
+  authDomain: "mny-apk.firebaseapp.com",
+  databaseURL: "https://mny-apk-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mny-apk",
+  storageBucket: "mny-apk.appspot.com",
+  messagingSenderId: "ISI_SENDER_ID",
+  appId: "ISI_APP_ID"
+};
+
+// INIT FIREBASE
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ===== USER =====
-const select = document.getElementById("matchSelect");
-const list = document.getElementById("list");
+/***********************
+ * USER SIDE
+ ***********************/
+const matchSelect = document.getElementById("matchSelect");
+const resultList = document.getElementById("list");
 
-// LOAD MATCH
+// LOAD MATCH LIST
 db.ref("matches").on("value", snap => {
-  if (!select) return;
-  select.innerHTML = `<option value="">Pilih Pertandingan</option>`;
+  if (!matchSelect) return;
+
+  matchSelect.innerHTML = `<option value="">-- Pilih Pertandingan --</option>`;
   snap.forEach(m => {
-    let opt = document.createElement("option");
+    const opt = document.createElement("option");
     opt.value = m.key;
     opt.textContent = `${m.val().nama} (${m.val().open ? "OPEN" : "CLOSED"})`;
-    select.appendChild(opt);
+    matchSelect.appendChild(opt);
   });
 });
 
 // LOAD RESULT USER
-select?.addEventListener("change", () => loadResult());
+if (matchSelect) {
+  matchSelect.addEventListener("change", () => {
+    const matchId = matchSelect.value;
+    if (!matchId || !resultList) return;
 
-function loadResult() {
-  let id = select.value;
-  if (!id || !list) return;
-  db.ref(`matches/${id}/results`).on("value", snap => {
-    list.innerHTML = "";
-    snap.forEach(r => {
-      let li = document.createElement("li");
-      li.textContent = `${r.key} : ${r.val().skor}`;
-      list.appendChild(li);
+    db.ref(`matches/${matchId}/results`).on("value", snap => {
+      resultList.innerHTML = "";
+      snap.forEach(r => {
+        const li = document.createElement("li");
+        li.innerText = `${r.key} : ${r.val().skor}`;
+        resultList.appendChild(li);
+      });
     });
   });
 }
 
-// SUBMIT
+// SUBMIT TEBakan
 function kirim() {
-  let id = select.value;
-  if (!id) return alert("Pilih pertandingan");
+  const matchId = matchSelect.value;
+  if (!matchId) return alert("Pilih pertandingan dulu");
 
-  db.ref(`matches/${id}/open`).once("value", s => {
+  db.ref(`matches/${matchId}/open`).once("value", s => {
     if (!s.val()) return alert("Match ditutup");
 
-    let nama = document.getElementById("nama").value.trim();
-    let a = document.getElementById("a").value;
-    let b = document.getElementById("b").value;
+    const nama = document.getElementById("nama").value.trim();
+    const a = document.getElementById("a").value;
+    const b = document.getElementById("b").value;
 
     if (!nama || a === "" || b === "") return alert("Lengkapi data");
     if (a === b) return alert("Skor tidak boleh seri");
 
-    let skor = `${a}-${b}`;
+    const skor = `${a}-${b}`;
 
-    db.ref(`matches/${id}/results/${nama}`).once("value", snap => {
-      if (snap.exists())
-        return alert("Nama ini sudah pernah mengisi");
+    // 1 nama 1 tebakan
+    db.ref(`matches/${matchId}/results/${nama}`).once("value", snap => {
+      if (snap.exists()) return alert("Nama ini sudah mengisi");
 
-      db.ref(`matches/${id}/results`).once("value", rs => {
+      // skor tidak boleh sama
+      db.ref(`matches/${matchId}/results`).once("value", all => {
         let sama = false;
-        rs.forEach(r => {
+        all.forEach(r => {
           if (r.val().skor === skor) sama = true;
         });
         if (sama) return alert("Skor sudah dipilih");
 
-        db.ref(`matches/${id}/results/${nama}`).set({
-          skor: skor,
+        db.ref(`matches/${matchId}/results/${nama}`).set({
+          skor,
           waktu: Date.now()
         });
       });
@@ -70,16 +89,34 @@ function kirim() {
   });
 }
 
-// ===== ADMIN =====
+/***********************
+ * ADMIN SIDE
+ ***********************/
 const matchList = document.getElementById("matchList");
 const adminResult = document.getElementById("adminResult");
 
-// ADMIN LOAD MATCH
+// TAMBAH MATCH
+function tambahMatch() {
+  const input = document.getElementById("matchName");
+  const nama = input.value.trim();
+  if (!nama) return alert("Isi nama pertandingan");
+
+  db.ref("matches").push({
+    nama,
+    open: true,
+    results: {}
+  });
+
+  input.value = "";
+}
+
+// LOAD MATCH ADMIN
 db.ref("matches").on("value", snap => {
   if (!matchList) return;
   matchList.innerHTML = "";
+
   snap.forEach(m => {
-    let li = document.createElement("li");
+    const li = document.createElement("li");
     li.innerHTML = `
       <b>${m.val().nama}</b>
       <button onclick="toggle('${m.key}', ${m.val().open})">
@@ -91,33 +128,19 @@ db.ref("matches").on("value", snap => {
   });
 });
 
-// TAMBAH MATCH
-function tambahMatch() {
-  let nama = document.getElementById("matchName").value.trim();
-  if (!nama) return;
-
-  db.ref("matches").push({
-    nama,
-    open: true,
-    results: {}
-  });
-
-  document.getElementById("matchName").value = "";
-}
-
 // OPEN / CLOSE
 function toggle(id, current) {
   db.ref(`matches/${id}/open`).set(!current);
 }
 
-// ADMIN VIEW RESULT
+// LIHAT HASIL ADMIN
 function lihat(id) {
   if (!adminResult) return;
   db.ref(`matches/${id}/results`).on("value", snap => {
     adminResult.innerHTML = "";
     snap.forEach(r => {
-      let li = document.createElement("li");
-      li.textContent = `${r.key} : ${r.val().skor}`;
+      const li = document.createElement("li");
+      li.innerText = `${r.key} : ${r.val().skor}`;
       adminResult.appendChild(li);
     });
   });
