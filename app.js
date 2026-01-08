@@ -17,7 +17,7 @@ const db = firebase.database();
 /***********************
  * ADMIN PIN
  ***********************/
-const ADMIN_PIN = "123456"; // ⬅️ GANTI SESUAI KEINGINAN
+const ADMIN_PIN = "123456";
 let adminUnlocked = false;
 
 function unlock() {
@@ -51,7 +51,7 @@ db.ref("matches").on("value", snap => {
   });
 });
 
-// LOAD RESULT USER (DENGAN NOMOR + TOTAL)
+// LOAD RESULT USER
 if (matchSelect) {
   matchSelect.addEventListener("change", () => {
     const matchId = matchSelect.value;
@@ -60,7 +60,6 @@ if (matchSelect) {
     db.ref(`matches/${matchId}/results`).on("value", snap => {
       resultList.innerHTML = "";
 
-      // TOTAL PESERTA
       if (totalPesertaEl) {
         totalPesertaEl.innerText = "Total peserta: " + snap.numChildren();
       }
@@ -76,7 +75,9 @@ if (matchSelect) {
   });
 }
 
-// SUBMIT TEBakan
+/***********************
+ * SUBMIT TEBakAN (FIX ANTI SKOR KEMBAR)
+ ***********************/
 function kirim() {
   const matchId = matchSelect.value;
   if (!matchId) return alert("Pilih pertandingan dulu");
@@ -92,24 +93,36 @@ function kirim() {
     if (a === b) return alert("Skor tidak boleh seri");
 
     const skor = `${a}-${b}`;
+    const resultsRef = db.ref(`matches/${matchId}/results`);
 
-    // 1 nama = 1 tebakan
-    db.ref(`matches/${matchId}/results/${nama}`).once("value", snap => {
-      if (snap.exists()) return alert("Nama ini sudah pernah mengisi");
+    resultsRef.transaction(current => {
+      if (current === null) current = {};
 
-      // skor harus unik
-      db.ref(`matches/${matchId}/results`).once("value", all => {
-        let sama = false;
-        all.forEach(r => {
-          if (r.val().skor === skor) sama = true;
-        });
-        if (sama) return alert("Skor sudah dipilih orang lain");
+      // 1 nama = 1 tebakan
+      if (current[nama]) {
+        return;
+      }
 
-        db.ref(`matches/${matchId}/results/${nama}`).set({
-          skor,
-          waktu: Date.now()
-        });
-      });
+      // skor harus unik (ANTI RACE CONDITION)
+      for (let k in current) {
+        if (current[k].skor === skor) {
+          return;
+        }
+      }
+
+      // AMAN → SIMPAN
+      current[nama] = {
+        skor,
+        waktu: Date.now()
+      };
+
+      return current;
+    }, (error, committed) => {
+      if (error) {
+        alert("Terjadi kesalahan, coba lagi");
+      } else if (!committed) {
+        alert("Skor atau nama sudah dipakai");
+      }
     });
   });
 }
@@ -161,13 +174,13 @@ function tambahMatch() {
   input.value = "";
 }
 
-// OPEN / CLOSE
+// OPEN / CLOSE MATCH
 function toggle(id, current) {
   if (!adminUnlocked) return alert("Akses admin ditolak");
   db.ref(`matches/${id}/open`).set(!current);
 }
 
-// LIHAT HASIL ADMIN (DENGAN NOMOR + TOTAL)
+// LIHAT HASIL ADMIN
 function lihat(id) {
   if (!adminResult) return;
 
