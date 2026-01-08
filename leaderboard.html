@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Leaderboard</title>
+  <style>
+    body {
+      margin: 0;
+      background: transparent;
+      font-family: Arial, sans-serif;
+      color: #fff;
+    }
+
+    .box {
+      background: rgba(0,0,0,0.75);
+      padding: 16px;
+      border-radius: 14px;
+      width: 520px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      text-align: center;
+      font-size: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .rank {
+      font-weight: bold;
+      margin-right: 4px;
+      white-space: nowrap;
+    }
+
+    .name {
+      flex: 1;
+      margin-left: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .score {
+      margin-left: 8px;
+      white-space: nowrap;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>🏆 LIVE LEADERBOARD</h2>
+  <div class="grid">
+    <ul id="col1"></ul>
+    <ul id="col2"></ul>
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+/***********************
+ * FIREBASE CONFIG
+ ***********************/
+const firebaseConfig = {
+  apiKey: "AIzaSyA2mdpjT5RvvxMxkXSLF8vnxHk5MaIErS4",
+  authDomain: "mny-apk.firebaseapp.com",
+  databaseURL: "https://mny-apk-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mny-apk",
+  storageBucket: "mny-apk.appspot.com",
+  messagingSenderId: "ISI_SENDER_ID",
+  appId: "ISI_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const col1 = document.getElementById("col1");
+const col2 = document.getElementById("col2");
+
+const CLOSE_DELAY = 20 * 60 * 1000; // 20 menit
+
+let lastClosedMatch = null;
+let lastClosedTime = 0;
+
+/***********************
+ * PILIH MATCH UNTUK LEADERBOARD
+ ***********************/
+db.ref("matches").on("value", snap => {
+  let openMatch = null;
+  let closedLatest = null;
+
+  snap.forEach(m => {
+    const val = m.val();
+
+    if (val.open && !openMatch) {
+      openMatch = m.key;
+    }
+
+    if (!val.open) {
+      closedLatest = m.key;
+    }
+  });
+
+  const now = Date.now();
+
+  // Kalau ada match tertutup & belum lewat 20 menit → tahan di situ
+  if (closedLatest) {
+    if (!lastClosedMatch || lastClosedMatch !== closedLatest) {
+      lastClosedMatch = closedLatest;
+      lastClosedTime = now;
+    }
+  }
+
+  if (lastClosedMatch && now - lastClosedTime < CLOSE_DELAY) {
+    loadLeaderboard(lastClosedMatch);
+  } else if (openMatch) {
+    lastClosedMatch = null;
+    loadLeaderboard(openMatch);
+  } else {
+    col1.innerHTML = "<li>Tidak ada match aktif</li>";
+    col2.innerHTML = "";
+  }
+});
+
+/***********************
+ * LOAD LEADERBOARD
+ ***********************/
+function loadLeaderboard(matchId) {
+  db.ref(`matches/${matchId}/results`).off();
+  db.ref(`matches/${matchId}/results`).on("value", snap => {
+
+    col1.innerHTML = "";
+    col2.innerHTML = "";
+
+    if (!snap.exists()) {
+      col1.innerHTML = "<li>Belum ada data</li>";
+      return;
+    }
+
+    let data = [];
+
+    snap.forEach(r => {
+      data.push({
+        nama: r.key,
+        skor: r.val().skor,
+        waktu: r.val().waktu || 0
+      });
+    });
+
+    // Urut sesuai waktu masuk
+    data.sort((a, b) => a.waktu - b.waktu);
+
+    const half = Math.ceil(data.length / 2);
+
+    data.forEach((d, i) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span class="rank">${i + 1}.</span>
+        <span class="name">${d.nama}</span>
+        <span class="score">${d.skor}</span>
+      `;
+
+      if (i < half) col1.appendChild(li);
+      else col2.appendChild(li);
+    });
+  });
+}
+</script>
+
+</body>
+</html>
